@@ -175,19 +175,19 @@ public class ListTester {
 			// Scenario: 03
 		testSingleElementList(emptyList_addToRearA_A, "emptyList_addToRearA_A", LIST_A, STRING_A);
 			// Scenario: 04
-
+		testSingleElementList(emptyList_addA_A, "emptyList_addA_A", LIST_A, STRING_A);
 			// Scenario: 05
-
+		testSingleElementList(emptyList_add0A_A, "emptyList_add0A_A", LIST_A, STRING_A);
 			
 		//1-element to empty list
 			// Scenario: 12
-			testEmptyList(A_removeFirst_emptyList, "A_removeFirst_emptyList");
+		testEmptyList(A_removeFirst_emptyList, "A_removeFirst_emptyList");
 			// Scenario: 13
-
+		// TO DO
 			// Scenario: 14
-			testEmptyList(A_removeA_emptyList, "A_removeA_emptyList");
+		testEmptyList(A_removeA_emptyList, "A_removeA_emptyList");
 			// Scenario: 15
-
+		// TO DO
 			// Scenario: 44
 
 
@@ -197,7 +197,7 @@ public class ListTester {
 			// Scenario: 07
 		testTwoElementList(A_addToRearB_AB, "A_addToRearB_AB", LIST_AB, STRING_AB);
 			// Scenario: 10
-			testTwoElementList(A_addB_BA, "A_addB_BA", LIST_BA, STRING_BA);
+		testTwoElementList(A_add0B_BA, "A_add0B_BA", LIST_BA, STRING_BA);
 
 			
 		//1-element to changed 1-element via set()
@@ -210,13 +210,13 @@ public class ListTester {
 			
 		//2-element to 1-element
 			// Scenario: 25
-
+		// TO DO
 			// Scenario: 26
 		testSingleElementList(AB_removeLast_A, "AB_removeLast_A", LIST_A, STRING_A);
 			// Scenario: 27
 
 			// Scenario: 28
-
+		testSingleElementList(AB_removeB_A, "AB_removeB_A", LIST_A, STRING_A);
 			// Scenario: 29
 
 			// Scenario: 30
@@ -340,15 +340,24 @@ public class ListTester {
 		return list;
 	}
 	private Scenario<Integer> emptyList_addToRearA_A = () -> emptyList_addToRearA_A();
-	 
 	/** Scenario #04: [] -> add(A) -> [A] 
 	 * @return [A] after add(A)
 	 */
-
+	private IndexedUnsortedList<Integer> emptyList_addA_A() {
+		IndexedUnsortedList<Integer> list = newList();
+		list.add(ELEMENT_A);
+		return list;
+	}
+	private Scenario<Integer> emptyList_addA_A = () -> emptyList_addA_A();
 	/** Scenario #05: [] -> add(0, A) -> [A] 
 	 * @return [A] after add(0, A)
 	 */
-
+	private IndexedUnsortedList<Integer> emptyList_add0A_A() {
+		IndexedUnsortedList<Integer> list = newList();
+		list.add(0, ELEMENT_A);
+		return list;
+	}
+	private Scenario<Integer> emptyList_add0A_A = () -> emptyList_add0A_A();
 	/** Scenario #06: [A] -> addToFront(B) -> [B,A] 
 	 * @return [B,A] after addToFront(B)
 	 */
@@ -372,12 +381,12 @@ public class ListTester {
 	/** Scenario #10: [A] -> add(0,B) -> [B,A]
 	 * @return [B,A] after add(0,B)
 	 */
-	private IndexedUnsortedList<Integer> A_addB_BA() {
+	private IndexedUnsortedList<Integer> A_add0B_BA() {
 		IndexedUnsortedList<Integer> list = emptyList_addToFrontA_A();
 		list.add(0, ELEMENT_B);
 		return list;
 	}
-	private Scenario<Integer> A_addB_BA = () -> A_addB_BA();
+	private Scenario<Integer> A_add0B_BA = () -> A_add0B_BA();
 
 	/** Scenario #12: [A] -> removeFirst() -> []
 	 * @return [] after removeFirst()
@@ -392,7 +401,7 @@ public class ListTester {
 	/** Scenario #13: [A] -> removeLast() -> [] 
 	 * @return [] after removeLast()
 	 */
-
+// TO DO
 	/** Scenario #14: [A] -> remove(A) -> []
 	 * @return [] after remove(A)
 	 */
@@ -406,7 +415,7 @@ public class ListTester {
 	/** Scenario #15: [A] -> remove(0) -> [] 
 	 * @return [] after remove(0)
 	 */
-
+// TO DO
 	 
 	/** Scenario #16: [A] -> set(0,B) -> [B] 
 	 * @return [B] after set(0,B)
@@ -431,7 +440,7 @@ public class ListTester {
 	/** Scenario #25: [A,B] -> removeFirst() -> [B]
 	 * @return [B] after removeFirst()
 	 */
-
+// TO DO
 	 
 	/** Scenario #26: [A,B] -> removeLast() -> [A]
 	 * @return [A] after removeLast()
@@ -451,7 +460,12 @@ public class ListTester {
 	/** Scenario #28: [A,B] -> remove(B) -> [A]
 	 * @return [A] after remove(B)
 	 */
-
+	private IndexedUnsortedList<Integer> AB_removeB_A() {
+		IndexedUnsortedList<Integer> list = A_addToRearB_AB();
+		list.remove(ELEMENT_B);
+		return list;
+	}
+	private Scenario<Integer> AB_removeB_A = () -> AB_removeB_A();
 	 
 	/** Scenario #29: [A,B] -> remove(0) -> [B]
 	 * @return [B] after remove(0)
