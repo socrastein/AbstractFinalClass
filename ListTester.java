@@ -183,11 +183,11 @@ public class ListTester {
 			// Scenario: 12
 		testEmptyList(A_removeFirst_emptyList, "A_removeFirst_emptyList");
 			// Scenario: 13
-		// TO DO
+		testEmptyList(A_removeLast_emptyList, "A_removeLast_emptyList");
 			// Scenario: 14
 		testEmptyList(A_removeA_emptyList, "A_removeA_emptyList");
 			// Scenario: 15
-		// TO DO
+		testEmptyList(A_remove0_emptyList, "A_remove0_emptyList");
 			// Scenario: 44
 
 
@@ -210,7 +210,7 @@ public class ListTester {
 			
 		//2-element to 1-element
 			// Scenario: 25
-		// TO DO
+		testSingleElementList(AB_removeFirst_B, "AB_removeFirst_B", LIST_B, STRING_B);
 			// Scenario: 26
 		testSingleElementList(AB_removeLast_A, "AB_removeLast_A", LIST_A, STRING_A);
 			// Scenario: 27
@@ -401,7 +401,13 @@ public class ListTester {
 	/** Scenario #13: [A] -> removeLast() -> [] 
 	 * @return [] after removeLast()
 	 */
-// TO DO
+	private IndexedUnsortedList<Integer> A_removeLast_emptyList() {
+		IndexedUnsortedList<Integer> list = emptyList_addToFrontA_A();
+		list.removeLast();
+		return list;
+	}
+	private Scenario<Integer> A_removeLast_emptyList = () -> A_removeLast_emptyList();
+
 	/** Scenario #14: [A] -> remove(A) -> []
 	 * @return [] after remove(A)
 	 */
@@ -415,7 +421,12 @@ public class ListTester {
 	/** Scenario #15: [A] -> remove(0) -> [] 
 	 * @return [] after remove(0)
 	 */
-// TO DO
+	private IndexedUnsortedList<Integer> A_remove0_emptyList() {
+		IndexedUnsortedList<Integer> list = emptyList_addToFrontA_A();
+		list.remove(0);
+		return list;
+	}
+	private Scenario<Integer> A_remove0_emptyList = () -> A_remove0_emptyList();
 	 
 	/** Scenario #16: [A] -> set(0,B) -> [B] 
 	 * @return [B] after set(0,B)
@@ -451,7 +462,12 @@ public class ListTester {
 	/** Scenario #25: [A,B] -> removeFirst() -> [B]
 	 * @return [B] after removeFirst()
 	 */
-// TO DO
+	private IndexedUnsortedList<Integer>  AB_removeFirst_B() {
+		IndexedUnsortedList<Integer> list = A_addToRearB_AB();
+		list.removeFirst();
+		return list;
+	}
+	private Scenario<Integer> AB_removeFirst_B = () -> AB_removeFirst_B();
 	 
 	/** Scenario #26: [A,B] -> removeLast() -> [A]
 	 * @return [A] after removeLast()
