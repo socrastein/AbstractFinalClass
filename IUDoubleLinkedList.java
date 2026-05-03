@@ -13,7 +13,7 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
     @Override
     public void addToFront(E element) {
         BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
-        
+
         if (isEmpty()) { // collection empty: newNode is rear
             rear = newNode;
         } else { // collection not empty: newNode and front point at each other
@@ -50,22 +50,18 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
     @Override
     public void addAfter(E element, E target) {
         BidirectionalNode<E> currentNode = front;
-        
-        while (currentNode != null) {
-            if (currentNode.getElement().equals(target)) {  // Make new node if target found
-                BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
-                BidirectionalNode<E> nextNode = currentNode.getNext();
 
-                if (currentNode != rear) {  // If it isn't the last node in the collection
-                    newNode.setNext(nextNode);
-                    nextNode.setPrevious(newNode);
+        while (currentNode != null) {
+            if (currentNode.getElement().equals(target)) { // Make new node if target found
+                if (currentNode == rear) {
+                    addToRear(element);
+                    return;
                 }
-                // We can always do this though
-                currentNode.setNext(newNode);
-                newNode.setPrevious(currentNode); 
-                
-                elemCount++;
-                modCount++;
+
+                BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
+                BidirectionalNode<E> next = currentNode.getNext();
+
+                addNodeBetweenNodes(currentNode, newNode, next);
             }
             currentNode = currentNode.getNext(); // Check the next node
         }
@@ -77,27 +73,21 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
         validateIndex(index, size() + 1);
 
         if (index == 0) { // If adding to the front
-            this.addToFront(element);
-        } else if (index == size()) { // If adding to the rear
-            this.addToRear(element);
-        } else { // Rest of the time
-            int currentIndex = 1;
-            BidirectionalNode<E> currentNode = front.getNext();
-            while (currentIndex != index) { // Traverse the list until at the correct index
-                currentNode = currentNode.getNext();
-                currentIndex++;
-            }
-            // Stitch it up
-            BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
-            BidirectionalNode<E> nextNode = currentNode.getNext();
-            currentNode.setNext(newNode);
-            newNode.setPrevious(currentNode);
-            newNode.setNext(nextNode);
-            nextNode.setPrevious(newNode);
+            addToFront(element);
+            return;
+        }
+        if (index == size()) { // If adding to the rear
+            addToRear(element);
+            return;
         }
 
-        elemCount++;
-        modCount++;
+        BidirectionalNode<E> currentNode = getNodeAtIndex(index);
+
+        // Place node between current's previous and current
+        // so it has same index that current did
+        BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
+        BidirectionalNode<E> previous = currentNode.getPrevious();
+        addNodeBetweenNodes(previous, newNode, currentNode);
     }
 
     @Override
@@ -133,49 +123,80 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
     @Override
     public E remove(E element) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+        throwIfEmpty();
+        BidirectionalNode<E> currentNode = front;
+        while (currentNode != null) {
+            if (currentNode.getElement().equals(element)) {
+                if (currentNode == front)
+                    return removeFirst();
+                if (currentNode == rear)
+                    return removeLast();
+
+                // Found a match somewhere in the middle
+                return removeNodeBetweenNodes(currentNode);
+            }
+            currentNode = currentNode.getNext();
+        }
+        throw new NoSuchElementException();
     }
 
     @Override
     public E remove(int index) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+        validateIndex(index, size());
+        if (index == 0)
+            return removeFirst();
+        if (index == size() - 1)
+            return removeLast();
+
+        BidirectionalNode<E> currentNode = getNodeAtIndex(index);
+        return removeNodeBetweenNodes(currentNode);
     }
 
     @Override
     public void set(int index, E element) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'set'");
+        validateIndex(index, size());
+        BidirectionalNode<E> target = getNodeAtIndex(index);
+        target.setElement(element);
+        modCount++;
     }
 
     @Override
     public E get(int index) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'get'");
+        validateIndex(index, size());
+        BidirectionalNode<E> target = getNodeAtIndex(index);
+        return target.getElement();
     }
 
     @Override
     public int indexOf(E element) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'indexOf'");
+        int currentIndex = 0;
+        BidirectionalNode<E> currentNode = front;
+        while (currentNode != null) {
+            if (currentNode.getElement().equals(element)) {
+                return currentIndex;
+            }
+            currentNode = currentNode.getNext();
+            currentIndex++;
+        }
+        return -1;
     }
 
     @Override
     public E first() {
-        if (isEmpty()) throw new NoSuchElementException("list is empty");
+        throwIfEmpty();
         return front.getElement();
     }
 
     @Override
     public E last() {
-        if (isEmpty()) throw new NoSuchElementException("list is empty");
+        throwIfEmpty();
         return rear.getElement();
     }
 
     @Override
     public boolean contains(E target) {
-        if (isEmpty()) return false; // Let's not loop if we don't have to 
+        if (isEmpty())
+            return false; // Let's not loop if we don't have to
         BidirectionalNode<E> currentNode = front;
         while (currentNode != null) {
             if (currentNode.getElement().equals(target)) { // Return true if element matches target
@@ -214,14 +235,63 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
         throw new UnsupportedOperationException("Unimplemented method 'listIterator'");
     }
 
-    // Throws an exception if collection is empty
+    /**
+     * Throws NoSuchElementException if collection is empty
+     */
     private void throwIfEmpty() {
-		if (isEmpty()) throw new NoSuchElementException("list is empty");
-	}
+        if (isEmpty())
+            throw new NoSuchElementException("list is empty");
+    }
 
-    // Throws an exception if index is out of bounds
+    /**
+     * Throws IndexOutOfBoundsException if index is out of bounds
+     */
     private void validateIndex(int index, int max) {
-		if (index < 0 || index >= max) throw new IndexOutOfBoundsException();
-	}
-    
+        if (index < 0 || index >= max)
+            throw new IndexOutOfBoundsException();
+    }
+
+    /**
+     * Returns a reference to the node at the specified index
+     * 
+     * @return the node found at index
+     */
+    private BidirectionalNode<E> getNodeAtIndex(int index) {
+        int currentIndex = 0;
+        BidirectionalNode<E> currentNode = front;
+        while (currentIndex != index) {
+            currentNode = currentNode.getNext();
+            currentIndex++;
+        }
+        return currentNode;
+    }
+
+    /**
+     * Removes node from between two other nodes, setting its previous to point to
+     * its next and vice versa
+     * 
+     * @return the E value the node was holding
+     */
+    private E removeNodeBetweenNodes(BidirectionalNode<E> node) {
+        E returnValue = node.getElement();
+        // Set previous node to point to one after current
+        node.getPrevious().setNext(node.getNext());
+        // Set node after current to point to one before current
+        node.getNext().setPrevious(node.getPrevious());
+
+        elemCount--;
+        modCount++;
+        return returnValue;
+    }
+
+    private void addNodeBetweenNodes(BidirectionalNode<E> previous, BidirectionalNode<E> newNode,
+            BidirectionalNode<E> next) {
+        previous.setNext(newNode);
+        newNode.setPrevious(previous);
+        next.setPrevious(newNode);
+        newNode.setNext(next);
+
+        elemCount++;
+        modCount++;
+    }
 }
