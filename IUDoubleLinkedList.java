@@ -52,7 +52,7 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
         BidirectionalNode<E> currentNode = front;
         
         while (currentNode != null) {
-            if (currentNode.getElement() == target) {  // Make new node if target found
+            if (currentNode.getElement().equals(target)) {  // Make new node if target found
                 BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
                 BidirectionalNode<E> nextNode = currentNode.getNext();
 
@@ -69,25 +69,66 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
             }
             currentNode = currentNode.getNext(); // Check the next node
         }
-        throw new NoSuchElementException(); // Throw exception if target not found
+        throw new NoSuchElementException("Target not found"); // Throw exception if target not found
     }
 
     @Override
     public void add(int index, E element) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'add'");
+        validateIndex(index, size() + 1);
+
+        if (index == 0) { // If adding to the front
+            this.addToFront(element);
+        } else if (index == size()) { // If adding to the rear
+            this.addToRear(element);
+        } else { // Rest of the time
+            int currentIndex = 1;
+            BidirectionalNode<E> currentNode = front.getNext();
+            while (currentIndex != index) { // Traverse the list until at the correct index
+                currentNode = currentNode.getNext();
+                currentIndex++;
+            }
+            // Stitch it up
+            BidirectionalNode<E> newNode = new BidirectionalNode<>(element);
+            BidirectionalNode<E> nextNode = currentNode.getNext();
+            currentNode.setNext(newNode);
+            newNode.setPrevious(currentNode);
+            newNode.setNext(nextNode);
+            nextNode.setPrevious(newNode);
+        }
+
+        elemCount++;
+        modCount++;
     }
 
     @Override
     public E removeFirst() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'removeFirst'");
+        throwIfEmpty();
+        E returnValue = front.getElement();
+        front = front.getNext();
+        if (size() != 1) { // If this isn't the only thing in the collection
+            front.setPrevious(null);
+        } else { // If it IS the only thing in the collection
+            rear = null;
+        }
+        elemCount--;
+        modCount++;
+        return returnValue;
+
     }
 
     @Override
     public E removeLast() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'removeLast'");
+        throwIfEmpty();
+        E returnValue = rear.getElement();
+        rear = rear.getPrevious();
+        if (size() != 1) { // If this isn't the only thing in the collection
+            rear.setNext(null);
+        } else { // If it IS the only thing in the collection
+            front = null;
+        }
+        elemCount--;
+        modCount++;
+        return returnValue;
     }
 
     @Override
@@ -134,8 +175,15 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
     @Override
     public boolean contains(E target) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        if (isEmpty()) return false; // Let's not loop if we don't have to 
+        BidirectionalNode<E> currentNode = front;
+        while (currentNode != null) {
+            if (currentNode.getElement().equals(target)) { // Return true if element matches target
+                return true;
+            }
+            currentNode = currentNode.getNext();
+        }
+        return false; // Return false if the element wasn't found
     }
 
     @Override
@@ -166,8 +214,14 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
         throw new UnsupportedOperationException("Unimplemented method 'listIterator'");
     }
 
+    // Throws an exception if collection is empty
     private void throwIfEmpty() {
-		if (isEmpty()) throw new NoSuchElementException();
+		if (isEmpty()) throw new NoSuchElementException("list is empty");
+	}
+
+    // Throws an exception if index is out of bounds
+    private void validateIndex(int index, int max) {
+		if (index < 0 || index >= max) throw new IndexOutOfBoundsException();
 	}
     
 }
