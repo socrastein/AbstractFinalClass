@@ -1,4 +1,3 @@
-import java.text.Bidi;
 import java.util.*;
 
 public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
@@ -219,6 +218,21 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
     }
 
     @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder("[");
+        BidirectionalNode<E> currentNode = front;
+        while (currentNode != null) {
+            result.append(currentNode.getElement());
+            if (currentNode.getNext() != null) {
+                result.append(", ");
+            }
+            currentNode = currentNode.getNext();
+        }
+        result.append("]");
+        return result.toString();
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return new DoubleLinkedListListIterator();
     }
@@ -386,26 +400,39 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
         @Override
         public void remove() {
             if (listIterModCount != modCount) throw new ConcurrentModificationException();
-            BidirectionalNode<E> offendingElement, next, previous;
+            BidirectionalNode<E> offendingNode, next, previous;
             
             switch (state) {
                 case NEXT:
-                    offendingElement = getNodeAtIndex(cursor.getPreviousIndex());
-                    next = offendingElement.getNext();
-                    previous = offendingElement.getPrevious();
-                    elemCount--;
+                    offendingNode = getNodeAtIndex(cursor.getPreviousIndex());
+                    next = offendingNode.getNext();
+                    previous = offendingNode.getPrevious();
+                    if (offendingNode == front) {
+                        removeFirst();
+                    } else if (offendingNode == rear) {
+                        removeLast();
+                    } else {
+                        removeNodeBetweenNodes(offendingNode);
+                    }
+                    cursor.leftShift();
                     break;
                 case PREVIOUS:
-                    offendingElement = getNodeAtIndex(cursor.getNextIndex());
-                    next = offendingElement.getNext();
-                    previous = offendingElement.getPrevious();
-                    cursor.leftShift();
-                    elemCount--;
+                    offendingNode = getNodeAtIndex(cursor.getNextIndex());
+                    next = offendingNode.getNext();
+                    previous = offendingNode.getPrevious();
+                    if (offendingNode == front) {
+                        removeFirst();
+                    } else if (offendingNode == rear) {
+                        removeLast();
+                    } else {
+                        removeNodeBetweenNodes(offendingNode);
+                    }
                     break;
                 case NEITHER:
                     throw new IllegalStateException();
             }
-            
+            listIterModCount++;
+            state = ListIteratorState.NEITHER;
         }
 
         @Override
