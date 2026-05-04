@@ -225,14 +225,12 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
     @Override
     public ListIterator<E> listIterator() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listIterator'");
+        return new DoubleLinkedListListIterator();
     }
 
     @Override
     public ListIterator<E> listIterator(int startingIndex) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listIterator'");
+        return new DoubleLinkedListListIterator(startingIndex);
     }
 
     /**
@@ -293,5 +291,175 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
         elemCount++;
         modCount++;
+    }
+
+    /*Cursor for list iterator */
+    private class DoubleLinkedListCursor {
+        private int iterNextIndex;
+
+        private DoubleLinkedListCursor(int nextIndex) {
+            if (nextIndex < 0 || nextIndex > elemCount) throw new IndexOutOfBoundsException();
+            this.iterNextIndex = nextIndex;
+        }
+
+        public int getNextIndex() {
+            return iterNextIndex;
+        }
+
+        public int getPreviousIndex() {
+            return iterNextIndex-1;
+        }
+
+        public void rightShift() {
+            if(iterNextIndex >= elemCount) return;
+            iterNextIndex++;
+        }
+
+        public void leftShift() {
+            if(getPreviousIndex() <= -1) return;
+            iterNextIndex--;
+        }        
+    }
+
+    /*list iterator state enum*/
+    private enum ListIteratorState { PREVIOUS, NEXT, NEITHER }
+
+    /*list iterator */
+	private class DoubleLinkedListListIterator implements ListIterator<E> {
+        private DoubleLinkedListCursor cursor;
+        private ListIteratorState state;
+        private int listIterModCount;
+
+        public DoubleLinkedListListIterator() {
+            this(0);
+        }
+
+        public DoubleLinkedListListIterator(int nextIndex) {
+            cursor = new DoubleLinkedListCursor(nextIndex);
+            state = ListIteratorState.NEITHER;
+            listIterModCount = modCount;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if(listIterModCount != modCount) throw new ConcurrentModificationException();
+            return(cursor.getNextIndex() < elemCount);
+        }
+
+        @Override
+        public E next() {
+            if(!hasNext()) throw new NoSuchElementException();
+            E element = get(cursor.getNextIndex());
+            cursor.rightShift();
+            state = ListIteratorState.NEXT;
+            return element;
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            if(listIterModCount != modCount) throw new ConcurrentModificationException();
+            return cursor.getPreviousIndex() > -1;
+        }
+
+        @Override
+        public E previous() {
+            if(!hasPrevious()) throw new NoSuchElementException();
+            E element = get(cursor.getPreviousIndex());
+            cursor.leftShift();
+            state = ListIteratorState.PREVIOUS;
+            return element;
+        }
+
+        @Override
+        public int nextIndex() {
+            if (listIterModCount != modCount) throw new ConcurrentModificationException();
+            return cursor.getNextIndex();
+        }
+
+        @Override
+        public int previousIndex() {
+            if (listIterModCount != modCount) throw new ConcurrentModificationException();
+            return cursor.getPreviousIndex();
+        }
+
+        @Override
+        public void remove() {
+            if (listIterModCount != modCount) throw new ConcurrentModificationException();
+            BidirectionalNode<E> offendingElement;
+            if (!isEmpty() && elemCount != 1) {
+                switch (state) {
+                    case NEXT:
+                        offendingElement = getNodeAtIndex(cursor.getPreviousIndex());
+                        offendingElement.getNext().setPrevious(offendingElement.getPrevious());
+                        offendingElement.getPrevious().setNext(offendingElement.getNext());
+                        offendingElement = null;
+                        elemCount--;
+                        cursor.leftShift();
+                        break;
+                    case PREVIOUS:
+                        offendingElement = getNodeAtIndex(cursor.getNextIndex());
+                        offendingElement.getNext().setPrevious(offendingElement.getPrevious());
+                        offendingElement.getPrevious().setNext(offendingElement.getNext());
+                        offendingElement = null;
+                        elemCount--;
+                        break;
+                    case NEITHER:
+                        throw new IllegalStateException();
+                }
+            } else {
+                removeFirst();
+                listIterModCount++;
+            }
+        }
+
+        @Override
+        public void set(E element) {
+            if (listIterModCount != modCount) throw new ConcurrentModificationException();
+            if (size() == 0){
+                addToRear(element);
+                cursor.rightShift();
+                listIterModCount++;
+            }
+
+            BidirectionalNode<E> newElement = new BidirectionalNode<>(element);
+            BidirectionalNode<E> next = getNodeAtIndex(cursor.getNextIndex());
+            BidirectionalNode<E> previous = getNodeAtIndex(cursor.getPreviousIndex());            
+
+            switch (state) {
+                case NEXT:
+                    newElement.setNext(next);
+                    newElement.setPrevious(previous.getPrevious());
+                    break;
+                case PREVIOUS:
+                    newElement.setPrevious(previous);
+                    newElement.setNext(next.getNext());
+                    break;
+                case NEITHER:
+                    throw new IllegalStateException();
+            }
+        }
+
+        @Override
+        public void add(E element) {
+            if (listIterModCount != modCount) throw new ConcurrentModificationException();
+            BidirectionalNode<E> newElement = new BidirectionalNode<>(element);
+            if(elemCount == 0) {
+                addToRear(element);
+                listIterModCount++;
+            } else {
+                BidirectionalNode<E> next, previous;
+                //get the nodes around the cursor
+                previous = getNodeAtIndex(cursor.getPreviousIndex());
+                next = getNodeAtIndex(cursor.getNextIndex());
+                //tie the new node to the next and previous ones
+                newElement.setPrevious(previous);
+                newElement.setNext(next);
+                //sever the tie between next and previous
+                if(elemCount > 1){
+                    if(previous != null) previous.setNext(newElement);
+                    if(next != null) next.setPrevious(newElement);
+                }
+            }
+        }  
     }
 }
