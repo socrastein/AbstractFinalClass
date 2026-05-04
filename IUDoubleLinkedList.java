@@ -219,90 +219,9 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return new DLLIterator();
+        return new DoubleLinkedListListIterator();
     }
 
-    /** Iterator from IUSingleLinkedList but twisted to accept bidirectional nodes,
-     * this is so we have both types of iterators, since some tests are failing due to lack of iterator.
-    */
-	private class DLLIterator implements Iterator<E> {
-		private BidirectionalNode<E> previous;
-		private BidirectionalNode<E> current;
-		private BidirectionalNode<E> next;
-		private int iterModCount;
-		private boolean canRemove = false;
-
-		/** Creates a new iterator for the list */
-		public DLLIterator() {
-			previous = null;
-			current = null;
-			next = front;
-			iterModCount = modCount;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (iterModCount != modCount)
-				throw new ConcurrentModificationException();
-
-			return (next != null);
-		}
-
-		@Override
-		public E next() {
-			if (!hasNext())
-				throw new NoSuchElementException();
-			E element;
-
-			// Shift 'bookmarks' forward
-			previous = current;
-			current = next;
-			next = next.getNext();
-
-			// Store the element to return and flag the iterator as ready for removal
-			element = current.getElement();
-			canRemove = true;
-
-			return element;
-		}
-
-		@Override
-		public void remove() {
-			if (iterModCount != modCount)
-				throw new ConcurrentModificationException();
-			if (!canRemove)
-				throw new IllegalStateException();
-
-			// Using this method will adjust reference variables
-			removeElement(previous, current);
-
-			// Update placeholders
-			current = previous;
-
-			// Keeps modCounts sync'd and prevents consecutive remove() calls
-			iterModCount++;
-			canRemove = false;
-		}
-
-        private E removeElement(BidirectionalNode<E> previous, BidirectionalNode<E> current) {
-		// Grab element
-		E result = current.getElement();
-		// If not the first element in the list
-		if (previous != null) {
-			previous.setNext(current.getNext());
-		} else { // If the first element in the list
-			front = current.getNext();
-		}
-		// If the last element in the list
-		if (current.getNext() == null) {
-			rear = previous;
-		}
-		elemCount--;
-		modCount++;
-
-		return result;
-	}
-	}
 
     @Override
     public ListIterator<E> listIterator() {
@@ -468,19 +387,28 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
             if (listIterModCount != modCount) throw new ConcurrentModificationException();
             BidirectionalNode<E> offendingElement;
             if (!isEmpty() && elemCount != 1) {
+                
                 switch (state) {
                     case NEXT:
                         offendingElement = getNodeAtIndex(cursor.getPreviousIndex());
-                        offendingElement.getNext().setPrevious(offendingElement.getPrevious());
-                        offendingElement.getPrevious().setNext(offendingElement.getNext());
+                        //grab the nodes surrounding the bad one
+                        BidirectionalNode<E> next = offendingElement.getNext();
+                        BidirectionalNode<E> previous = offendingElement.getPrevious();
+                        //Tie the gap shut
+                        previous.setNext(next);
+                        next.setPrevious(previous);
                         offendingElement = null;
                         elemCount--;
                         cursor.leftShift();
                         break;
                     case PREVIOUS:
                         offendingElement = getNodeAtIndex(cursor.getNextIndex());
-                        offendingElement.getNext().setPrevious(offendingElement.getPrevious());
-                        offendingElement.getPrevious().setNext(offendingElement.getNext());
+                        //grab the nodes surrounding the bad one
+                        BidirectionalNode<E> prevNext = offendingElement.getNext();
+                        BidirectionalNode<E> prevPrevious = offendingElement.getPrevious();
+                        //Tie the gap shut
+                        prevPrevious.setNext(prevNext);
+                        prevNext.setPrevious(prevPrevious);
                         offendingElement = null;
                         elemCount--;
                         break;
