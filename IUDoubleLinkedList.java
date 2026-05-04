@@ -219,9 +219,90 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
 
     @Override
     public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'iterator'");
+        return new DLLIterator();
     }
+
+    /** Iterator from IUSingleLinkedList but twisted to accept bidirectional nodes,
+     * this is so we have both types of iterators, since some tests are failing due to lack of iterator.
+    */
+	private class DLLIterator implements Iterator<E> {
+		private BidirectionalNode<E> previous;
+		private BidirectionalNode<E> current;
+		private BidirectionalNode<E> next;
+		private int iterModCount;
+		private boolean canRemove = false;
+
+		/** Creates a new iterator for the list */
+		public DLLIterator() {
+			previous = null;
+			current = null;
+			next = front;
+			iterModCount = modCount;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (iterModCount != modCount)
+				throw new ConcurrentModificationException();
+
+			return (next != null);
+		}
+
+		@Override
+		public E next() {
+			if (!hasNext())
+				throw new NoSuchElementException();
+			E element;
+
+			// Shift 'bookmarks' forward
+			previous = current;
+			current = next;
+			next = next.getNext();
+
+			// Store the element to return and flag the iterator as ready for removal
+			element = current.getElement();
+			canRemove = true;
+
+			return element;
+		}
+
+		@Override
+		public void remove() {
+			if (iterModCount != modCount)
+				throw new ConcurrentModificationException();
+			if (!canRemove)
+				throw new IllegalStateException();
+
+			// Using this method will adjust reference variables
+			removeElement(previous, current);
+
+			// Update placeholders
+			current = previous;
+
+			// Keeps modCounts sync'd and prevents consecutive remove() calls
+			iterModCount++;
+			canRemove = false;
+		}
+
+        private E removeElement(BidirectionalNode<E> previous, BidirectionalNode<E> current) {
+		// Grab element
+		E result = current.getElement();
+		// If not the first element in the list
+		if (previous != null) {
+			previous.setNext(current.getNext());
+		} else { // If the first element in the list
+			front = current.getNext();
+		}
+		// If the last element in the list
+		if (current.getNext() == null) {
+			rear = previous;
+		}
+		elemCount--;
+		modCount++;
+
+		return result;
+	}
+	}
 
     @Override
     public ListIterator<E> listIterator() {
@@ -406,9 +487,11 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
                     case NEITHER:
                         throw new IllegalStateException();
                 }
-            } else {
+            } else if(elemCount == 1) {
                 removeFirst();
                 listIterModCount++;
+            }else{
+                return;
             }
         }
 
