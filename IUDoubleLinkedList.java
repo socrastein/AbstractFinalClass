@@ -388,6 +388,24 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
             if (listIterModCount != modCount) throw new ConcurrentModificationException();
             BidirectionalNode<E> offendingElement, next, previous;
             
+            switch (state) {
+                case NEXT:
+                    offendingElement = getNodeAtIndex(cursor.getPreviousIndex());
+                    next = offendingElement.getNext();
+                    previous = offendingElement.getPrevious();
+                    elemCount--;
+                    break;
+                case PREVIOUS:
+                    offendingElement = getNodeAtIndex(cursor.getNextIndex());
+                    next = offendingElement.getNext();
+                    previous = offendingElement.getPrevious();
+                    cursor.leftShift();
+                    elemCount--;
+                    break;
+                case NEITHER:
+                    throw new IllegalStateException();
+            }
+            
         }
 
         @Override
