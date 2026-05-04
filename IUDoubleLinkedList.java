@@ -218,6 +218,21 @@ public class IUDoubleLinkedList<E> implements IndexedUnsortedList<E> {
     }
 
     @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder("[");
+        BidirectionalNode<E> currentNode = front;
+        while (currentNode != null) {
+            result.append(currentNode.getElement());
+            if (currentNode.getNext() != null) {
+                result.append(", ");
+            }
+            currentNode = currentNode.getNext();
+        }
+        result.append("]");
+        return result.toString();
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return new DoubleLinkedListListIterator();
     }
